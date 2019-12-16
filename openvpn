@@ -1,0 +1,26 @@
+#!/bin/sh
+
+vpn_user=""
+vpn_password=""
+
+
+get_vpn_secrets() {
+  vpn_user=$(cat /run/secrets/vpn_user)
+  vpn_password=$(cat /run/secrets/vpn_password)
+}
+
+create_vpn_credentials_file() {
+  if [ ! -f "/openvpn_credentials" ]; then
+    printf "%s\n%s\n" "${vpn_user}" "${vpn_password}" > /openvpn_credentials
+    chmod 0400 /openvpn_credentials
+  fi
+
+}
+
+main() {
+  get_vpn_secrets
+  create_vpn_credentials_file
+  /usr/sbin/openvpn --config /config.ovpn --auth-user-pass /openvpn_credentials --auth-nocache
+}
+
+main
