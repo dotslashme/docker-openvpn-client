@@ -1,41 +1,54 @@
 # OpenVPN client
 
-The purpose of this image is to provide a vpn container, that can be used by others containers in a cluster, that requires a vpn connection.
+A simple username/password openvpn client that can provide vpn access to other docker containers.
 
 ## Requirements
 
-- a vpn config that should be mounted to /openvpn.ovpn
-- a docker secret named vpn_user
-- a docker secret named vpn_password
+- openvpn config that must be mounted to `/openvpn.ovpn`
+- a docker secret for the username (must be named vpn_user in the container)
+- a docker secret for the password (must be named vpn_password in the container)
+
+## Extras
+
+Use the `dns:` entry in your compose file to force docker to use the vpn dns servers, if this is a wanted behavior.
 
 ## Usage
 
 Use it straight from your compose file:
 
 ```
+version: '3.3'
+
 services:
   openvpn-client:
-    cap_add:
+    cap_add: # This will make the container able to control networks.
       - net_admin
     container_name: openvpn-client
-    devices:
+    devices: # Make sure to mount the tun device on the host.
       - /dev/net/tun:/dev/net/tun
-    dns:
-      - # Add your primary vpn dns server here
-      - # Add your secondary vpn dns server here
+    dns: # You probably want your vpn client to do lookup through your vpn provider to prevent dns leaks.
+      - 146.185.134.104
+      - 192.241.172.159
     image: dotslashme/openvpn-client
     secrets:
-      - vpn_user
-      - vpn_password
-    volumes:
+      - vpn_user # Must be named vpn_user here since it's used for lookup in the container.
+      - vpn_password # Must be named vpn_password here since it's used for lookup in the container.
+    volumes: # Make sure to bind your vpn config to /openvpn.ovpn
       - type: bind
         source: ./config.ovpn
         target: /config.ovpn
+  test:
+    image: alpine:latest
+    network_mode: service:openvpn-client # Make this container use the vpn network connection.
+    command: /bin/sh -c "wget http://icanhazip.com/ && cat index.html && rm -f index.html"
+    restart: unless-stopped
 
 secrets:
   vpn_user:
+    file: ./vpn_user
   vpn_password:
+    file: ./vpn_password
 ```
 
 The other service that should use the vpn connection must have the following in its declaration:
-`network_mode: service:openvpn-client`. See the docker-compose.yml file for an example on how to use it.
+`network_mode: service:openvpn-client`
