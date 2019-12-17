@@ -38,4 +38,4 @@ secrets:
 ```
 
 The other service that should use the vpn connection must have the following in its declaration:
-`network_mode: service:openvpn-client`
+`network_mode: service:openvpn-client`. See the docker-compose.yml file for an example on how to use it.
