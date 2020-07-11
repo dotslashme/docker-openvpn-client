@@ -4,7 +4,7 @@ A simple username/password openvpn client that can provide vpn access to other d
 
 ## Requirements
 
-- openvpn config that must be mounted to `/openvpn.ovpn`
+- openvpn config that must be mounted to `/config.ovpn`
 - a docker secret for the username (must be named vpn_user in the container)
 - a docker secret for the password (must be named vpn_password in the container)
 
